@@ -7,17 +7,8 @@ export const SEARCH_MOVIES = gql`
       name
       overview
       releaseDate
-      cast {
-        id
-        person {
-          name
-        }
-        role {
-          ... on Cast {
-            character
-          }
-        }
-      }
+      score
+      votes
     }
   }
 `
