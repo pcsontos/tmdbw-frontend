@@ -4,8 +4,11 @@ import {Search} from "@element-plus/icons-vue"
 import {SEARCH_MOVIES} from "@/graphql-operations"
 import {useQuery, useResult} from "@vue/apollo-composable"
 import {searchMovie } from '@/rest-operations'
+import WikipediaSearchDialog from './WikipediaSearchDialog'
 
 const searchFor = ref("")
+const dialogVisible = ref(false)
+
 const variables = ref({
   query: searchFor.value,
 })
@@ -22,6 +25,10 @@ const state = reactive({
   }),
 })
 
+const showDialog = ()=> {
+  dialogVisible.value = true
+}
+
 const search = () => {
   console.log(`searching... ${searchFor.value}`)
   variables.value = {query: searchFor.value}
@@ -32,6 +39,7 @@ const searchOnWiki = async (name) => {
   try {
     const { data } = await searchMovie(name)
     console.log(data.query.search)
+    showDialog()
   } catch (e) {
     console.log(e)
   }
@@ -45,6 +53,9 @@ const formatDate = (date) => {
 </script>
 <template>
   <div>
+    <el-button type="text" @click="showDialog()"
+    >open the outer Dialog</el-button
+    >
     <el-row>
       <el-col :span="16">
         <el-input
@@ -98,5 +109,7 @@ const formatDate = (date) => {
                          width="100" />
       </el-table>
     </el-row>
+    <wikipedia-search-dialog :visible="dialogVisible.value"></wikipedia-search-dialog>
+
   </div>
 </template>
