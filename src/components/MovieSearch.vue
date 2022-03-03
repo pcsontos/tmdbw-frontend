@@ -3,18 +3,19 @@ import { computed, reactive, ref } from "vue"
 import { Search } from "@element-plus/icons-vue"
 import { SEARCH_MOVIES } from "@/graphql-operations"
 import { useQuery, useResult } from "@vue/apollo-composable"
-import { searchMovie } from '@/rest-operations'
 import WikipediaSearchDialog from './WikipediaSearchDialog'
 
 const searchFor = ref("")
 const dialogVisible = ref(false)
+const loadingState = ref(false)
+const searchOnWikipedia = ref("")
 
 const variables = ref({
   query: searchFor.value,
 })
-const searchQuery = useQuery(SEARCH_MOVIES, variables)
+const { result, loading, error } = useQuery(SEARCH_MOVIES, variables)
 const searchMovies = useResult(
-  searchQuery.result,
+  result,
   [],
   (data) => data?.searchMovies
 )
@@ -25,12 +26,9 @@ const state = reactive({
   }),
 })
 
-const showDialog = () => {
-  dialogVisible.value = true
-}
-
 const closedDialog = () => {
   dialogVisible.value = false
+  searchOnWikipedia.value = ''
 }
 
 const search = () => {
@@ -38,15 +36,9 @@ const search = () => {
   variables.value = { query: searchFor.value }
 }
 
-const searchOnWiki = async (name) => {
-  console.log(`Search on Wikipedia... ${name}`)
-  try {
-    const { data } = await searchMovie(name)
-    console.log(data.query.search)
-    showDialog()
-  } catch (e) {
-    console.log(e)
-  }
+const showWikipediaDialog = async (name) => {
+  searchOnWikipedia.value = name
+  dialogVisible.value = true
 }
 
 const formatDate = (date) => {
@@ -57,12 +49,6 @@ const formatDate = (date) => {
 </script>
 <template>
   <div>
-    <el-button
-      type="text"
-      @click="showDialog()"
-    >open the outer Dialog
-    </el-button
-    >
     <el-row>
       <el-col :span="16">
         <el-input
@@ -82,8 +68,8 @@ const formatDate = (date) => {
     </el-row>
     <el-row>
       <el-table
+        v-loading="loading"
         :data="state.movies"
-        :table-layout="'auto'"
         height="768px"
         stripe
         style="width: 100%"
@@ -96,12 +82,12 @@ const formatDate = (date) => {
         <el-table-column
           label="Name"
           prop="name"
-          width="180"
+          width="250"
         >
           <template #default="scope">
             <el-button
               type="text"
-              @click="searchOnWiki(scope.row.name)"
+              @click="showWikipediaDialog(scope.row.name)"
             >
               {{ scope.row.name }}
             </el-button>
@@ -115,7 +101,8 @@ const formatDate = (date) => {
         <el-table-column
           label="Release date"
           prop="releaseDate"
-          width="100"
+          width="200"
+          align="right"
         >
           <template #default="scope">
             {{ formatDate(scope.row.releaseDate) }}
@@ -134,6 +121,7 @@ const formatDate = (date) => {
       </el-table>
     </el-row>
     <wikipedia-search-dialog
+      :search="searchOnWikipedia"
       :visible="dialogVisible"
       @closed="closedDialog"
     ></wikipedia-search-dialog>
